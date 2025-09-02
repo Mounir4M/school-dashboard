@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>School Infrastructure Dashboard</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3498db">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="School Dashboard">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            min-height: 100vh;
+            color: #333;
+            padding-bottom: 80px;
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        .mobile-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(44, 62, 80, 0.95);
+            backdrop-filter: blur(10px);
+            color: white;
+            padding: 15px 20px;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+        }
+        
+        .mobile-header h1 {
+            font-size: 1.5rem;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        
+        .mobile-header p {
+            font-size: 0.9rem;
+            text-align: center;
+            opacity: 0.8;
+        }
+        
+        .container {
+            margin-top: 100px;
+            padding: 15px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+        
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .tab-navigation {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            display: flex;
+            border-top: 1px solid #e0e0e0;
+            z-index: 100;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        
+        .tab-item {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            color: #666;
+            background: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .tab-item.active {
+            color: #3498db;
+            background: #f8f9fa;
+        }
+        
+        .tab-icon {
+            width: 20px;
+            height: 20px;
+            display: block;
+        }
+        
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .simple-chart {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .chart-bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 60px;
+        }
+        
+        .bar {
+            width: 40px;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            min-height: 20px;
+        }
+        
+        .bar-label {
+            font-size: 0.8rem;
+            color: #333;
+            text-align: center;
+            font-weight: 500;
+        }
+        
+        .pie-chart {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .pie-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid;
+            transition: transform 0.2s ease;
+        }
+        
+        .pie-item:active {
+            transform: scale(0.98);
+        }
+        
+        .pie-value {
+            font-weight: bold;
+            margin-right: 8px;
+            min-width: 40px;
+        }
+        
+        .pie-label {
+            font-size: 0.85rem;
+            color: #555;
+        }
+        
+        .filters-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .filter-group {
+            margin-bottom: 15px;
+        }
+        
+        .filter-group:last-child {
+            margin-bottom: 0;
+        }
+        
+        .filter-group label {
+            display: block;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            background: white;
+            color: #333;
+        }
+        
+        .filter-group select:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+        
+        .school-details-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            min-height: 150px;
+        }
+        
+        .school-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .school-header {
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .school-name {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+        
+        .school-commune {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .needs-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .need-category {
+            background: #f8f9fa;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .need-category h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+        
+        .need-item {
+            background: white;
+            padding: 8px 10px;
+            margin: 4px 0;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        .commune-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .commune-card {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(9, 132, 227, 0.3);
+            transition: transform 0.2s ease;
+        }
+        
+        .commune-card:active {
+            transform: scale(0.98);
+        }
+        
+        .commune-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .commune-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            font-size: 0.8rem;
+        }
+        
+        .context-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .context-text {
+            color: #000000;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            text-align: justify;
+        }
+        
+        .footer {
+            text-align: center;
+            color: white;
+            margin: 20px 0;
+            padding: 15px;
+            opacity: 0.8;
+            font-size: 0.8rem;
+        }
+        
+        .install-banner {
+            position: fixed;
+            top: 80px;
+            left: 10px;
+            right: 10px;
+            background: #2ecc71;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3);
+        }
+        
+        .install-banner.show {
+            display: flex;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .install-btn {
+            background: white;
+            color: #2ecc71;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        
+        .close-banner {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+        
+        @media (max-width: 480px) {
+            .mobile-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .stat-number {
+                font-size: 1.3rem;
+            }
+            
+            .stat-label {
+                font-size: 0.7rem;
+            }
+            
+            .tab-item {
+                font-size: 0.7rem;
+                padding: 10px 6px;
+            }
+        }
+        
+        @media (display-mode: standalone) {
+            .install-banner {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="install-banner" id="installBanner">
+        <div>
+            <strong>Install App</strong><br>
+            <small>Add to home screen for easy access</small>
+        </div>
+        <div>
+            <button class="install-btn" id="installBtn">Install</button>
+            <button class="close-banner" id="closeBanner">&times;</button>
+        </div>
+    </div>
+
+    <div class="mobile-header">
+        <h1>School Infrastructure Dashboard</h1>
+        <p>Chtouka Ait Baha • 58 schools • 31,210 students</p>
+    </div>
+    
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">58</div>
+                <div class="stat-label">Total Schools</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">31,210</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">509</div>
+                <div class="stat-label">Total Classrooms</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">538</div>
+                <div class="stat-label">Avg Students/School</div>
+            </div>
+        </div>
+        
+        <!-- Charts Tab -->
+        <div id="charts-tab" class="tab-content active">
+            <div class="chart-container">
+                <div class="chart-title">Students Distribution by Commune</div>
+                <div class="pie-chart" id="studentsChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Schools Count by Commune</div>
+                <div class="simple-chart" id="schoolsChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Technology Equipment</div>
+                <div class="simple-chart" id="technologyChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Highest Priority Needs</div>
+                <div class="pie-chart" id="highNeedChart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">Lower Priority Needs</div>
+                <div class="pie-chart" id="lowNeedChart"></div>
+            </div>
+        </div>
+        
+        <!-- Explorer Tab -->
+        <div id="explorer-tab" class="tab-content">
+            <div class="filters-container">
+                <div class="filter-group">
+                    <label for="communeSelect">Select Commune:</label>
+                    <select id="communeSelect">
+                        <option value="">All Communes</option>
+                        <option value="Ait Amira">Ait Amira (15 schools)</option>
+                        <option value="Inchaden">Inchaden (6 schools)</option>
+                        <option value="Belfaa">Belfaa (8 schools)</option>
+                        <option value="Sidi Bibi">Sidi Bibi (14 schools)</option>
+                        <option value="Ouad Essafa">Ouad Essafa (15 schools)</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="schoolSelect">Select School:</label>
+                    <select id="schoolSelect">
+                        <option value="">Choose a commune first</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="categorySelect">Filter by Category:</label>
+                    <select id="categorySelect">
+                        <option value="">All Categories</option>
+                        <option value="infrastructure">Infrastructure</option>
+                        <option value="technology">Technology</option>
+                        <option value="accessibility">Accessibility</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="equipment">Equipment</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="schoolDetails" class="school-details-container">
+                <p>Select a commune and school to view detailed information, or choose a category to view comprehensive statistics across all schools</p>
+            </div>
+        </div>
+        
+        <!-- Communes Tab -->
+        <div id="communes-tab" class="tab-content">
+            <div class="commune-cards" id="communeCards"></div>
+        </div>
+        
+        <!-- Context Tab -->
+        <div id="context-tab" class="tab-content">
+            <div class="context-section">
+                <div class="section-title">Socio-Economic Context</div>
+                <p class="context-text">
+                    The schools analyzed in this dashboard operate within challenging socio-economic environments that significantly impact educational delivery. Many of these institutions serve rural and semi-rural communities in Chtouka Ait Baha, where economic hardship and geographic isolation create complex educational challenges.
+                </p>
+                <p class="context-text">
+                    Several schools report operating in areas with high agricultural activity that attract migrant workers from across Morocco and sub-Saharan Africa, creating diverse student populations with varying educational background and language needs. The proximity to agricultural zones means many families depend on seasonal work, leading to student mobility issues and interrupted learning patterns.
+                </p>
+                <p class="context-text">
+                    Infrastructure challenges reflect broader regional development gaps. Many schools lack reliable water connections, with some dependent on local associations for water supply. Basic connectivity issues, including inadequate internet access and poor road conditions, further isolate these educational communities from broader support networks and resources.
+                </p>
+                <p class="context-text">
+                    Despite these challenges, school administrators demonstrate remarkable resilience and innovation, often finding creative solutions to space constraints and resource limitations. The data reveals a strong commitment to inclusive education, with increasing attention to accessibility needs and special education requirements, reflecting the communities' determination to provide quality education for all children regardless of economic circumstances.
+                </p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>School Infrastructure Analysis | Based on Real School Data</p>
+            <p style="margin-top: 5px; font-weight: bold;">Powered By Cherrat Issam</p>
+        </div>
+    </div>
+    
+    <div class="tab-navigation">
+        <button class="tab-item active" data-tab="charts">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/>
+            </svg>
+            Charts
+        </button>
+        <button class="tab-item" data-tab="explorer">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+            Explorer
+        </button>
+        <button class="tab-item" data-tab="communes">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+            Communes
+        </button>
+        <button class="tab-item" data-tab="context">
+            <svg class="tab-icon" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+            </svg>
+            Context
+        </button>
+    </div>
+
+    <script>
+        // Data definitions
+        const communesData = {
+            "Ait Amira": { schools: 15, students: 11935, classrooms: 150, projectors: 120, computers: 25 },
+            "Inchaden": { schools: 6, students: 2110, classrooms: 38, projectors: 35, computers: 8 },
+            "Belfaa": { schools: 8, students: 3576, classrooms: 61, projectors: 44, computers: 12 },
+            "Sidi Bibi": { schools: 14, students: 4951, classrooms: 98, projectors: 78, computers: 18 },
+            "Ouad Essafa": { schools: 15, students: 8638, classrooms: 162, projectors: 98, computers: 22 }
+        };
+
+        const allSchoolsData = {
+            "Ait Amira": [
+                { name: "Aghraiss", students: 850, classrooms: 12, principal: "Mr.", phone: "669595591" },
+                { name: "Collège Al Argane", students: 1200, classrooms: 13, principal: "Mr.", phone: "6" },
+                { name: "Collège 11 Janvier", students: 2800, classrooms: 0, principal: "Mr.", phone: "6" },
+                { name: "Imam Mouslim", students: 235, classrooms: 0 },
+                { name: "KHERBA SIDI TAYEB", students: 913, classrooms: 9 },
+                { name: "Al Houda (Centre)", students: 300, classrooms: 0 },
+                { name: "Al Houda (Annexe: Douar Demnat)", students: 500, classrooms: 2 },
+                { name: "Ghzala", students: 650, classrooms: 0 },
+                { name: "Ghzala 3", students: 200, classrooms: 0 },
+                { name: "Essoualem", students: 390, classrooms: 0 },
+                { name: "Ibn Al Haytham", students: 1120, classrooms: 17 },
+                { name: "Tin Addi (Centre)", students: 370, classrooms: 0 },
+                { name: "Tin Addi. Annexe Tin El Haj Mbarek", students: 220, classrooms: 0 },
+                { name: "Al Izdihar", students: 1948, classrooms: 18 },
+                { name: "Lycée Al Khawarizmi", students: 1900, classrooms: 47 }
+            ],
+            "Inchaden": [
+                { name: "G.S. Al Wifak - Annex Ait Lahcen", students: 160, classrooms: 1 },
+                { name: "G.S Tounef", students: 600, classrooms: 9 },
+                { name: "G.S. Tounef- Anex Ait Al Ayat", students: 231, classrooms: 3 },
+                { name: "Arba Ait Boutayeb", students: 569, classrooms: 7 },
+                { name: "G.S. Ait Boutayeb- Annex- Ifariane", students: 179, classrooms: 4 },
+                { name: "G.S Kouhaiz.- Annexe Ennouasser", students: 371, classrooms: 5 }
+            ],
+            "Belfaa": [
+                { name: "Imajad", students: 129, classrooms: 4 },
+                { name: "Immi N Taguenet", students: 120, classrooms: 6 },
+                { name: "Immi N Taguenet, Annexe Lksbate", students: 199, classrooms: 3 },
+                { name: "Ibno Aabbad", students: 312, classrooms: 0 },
+                { name: "Abdel Malek Essaadi", students: 1128, classrooms: 16 },
+                { name: "Collège Belfaa", students: 1104, classrooms: 13 },
+                { name: "Tin Ali Ouaadi. Annexe Oukhraib", students: 347, classrooms: 5 },
+                { name: "Tin Ali Ouaadi. Annexe Oukhraib 2", students: 237, classrooms: 4 }
+            ],
+            "Sidi Bibi": [
+                { name: "Ahmed Boukmakh", students: 1345, classrooms: 14 },
+                { name: "G.S Tadart", students: 1238, classrooms: 13 },
+                { name: "G.S Al Khansaa", students: 480, classrooms: 11 },
+                { name: "G.S Al Khansaa- Annexe Douar EL HAQ", students: 300, classrooms: 3 },
+                { name: "G.S Al Khansaa-Anexe- Ihchach", students: 400, classrooms: 5 },
+                { name: "G.S Al Khansaa-Anexe Ben Jarrar", students: 272, classrooms: 6 },
+                { name: "G.S- AL ALAOUIINE-Anexe EL KHARBA AIT MIMOUN", students: 140, classrooms: 4 },
+                { name: "G.S AL ALAOUIINE Anexe EL BRAYJ AYT MYMOUN", students: 132, classrooms: 3 },
+                { name: "G.S IBNO HAZM Annexe TIN ALI MANSOUR", students: 250, classrooms: 5 },
+                { name: "G.S TAKADE KABLIA - Annexe TAKADE SAHILIA", students: 280, classrooms: 7 },
+                { name: "G.S Ennahda", students: 400, classrooms: 7 },
+                { name: "Annexe Ennahda-", students: 457, classrooms: 8 },
+                { name: "G.S- AL ALAOUIINE", students: 175, classrooms: 0 },
+                { name: "G.S TADARTE Annexee ELKEBLA", students: 163, classrooms: 2 }
+            ],
+            "Ouad Essafa": [
+                { name: "Lycée Al Fadila", students: 2211, classrooms: 31 },
+                { name: "Collège Sidi Hadj Lhbib", students: 358, classrooms: 0 },
+                { name: "Sidi Ali Aouzal (centre)", students: 537, classrooms: 9, principal: "Mr. Youssef Joughaoui", phone: "660123656" },
+                { name: "Sidi Ali Aouzal, Annexe Ait Oumalya", students: 239, classrooms: 4, principal: "Mr. Youssef Joughaoui", phone: "660123656" },
+                { name: "Erriaya", students: 1298, classrooms: 18, principal: "Mr. Ramdan Raiss", phone: "660123213" },
+                { name: "Alfath (centre) Ait Balla", students: 327, classrooms: 4, phone: "660123188" },
+                { name: "Alfath, Annexe Azmel", students: 400, classrooms: 4, phone: "660123188" },
+                { name: "Alfath, Annexe Ait Essaih", students: 467, classrooms: 6, phone: "660123188" },
+                { name: "Imzilen, Annexe Timlaline", students: 215, classrooms: 4, principal: "Mr. Driss Anchkar", phone: "669595085" },
+                { name: "Abdalla Ben Ali", students: 424, classrooms: 7, principal: "Abdellah Moustaid", phone: "666181031" },
+                { name: "Abdalla Ben Ali, Annexe Bouaalaga", students: 403, classrooms: 6, principal: "Abdellah Moustaid", phone: "666181031" },
+                { name: "Mohamed Khair Eddine, Annexe Tin Hammou", students: 325, classrooms: 7 },
+                { name: "Al Khadra Talberjt", students: 500, classrooms: 7 },
+                { name: "Assanabil", students: 600, classrooms: 0 }
+            ]
+        };
+
+        // PWA Installation
+        let deferredPrompt;
+        let installBanner = document.getElementById('installBanner');
+        let installBtn = document.getElementById('installBtn');
+        let closeBanner = document.getElementById('closeBanner');
+
+        // Tab switching function
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tab-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const targetTab = document.getElementById(tabName + '-tab');
+            if (targetTab) {
+                targetTab.classList.add('active');
+            }
+            
+            const currentTabButton = document.querySelector(`[data-tab="${tabName}"]`);
+            if (currentTabButton) {
+                currentTabButton.classList.add('active');
+            }
+            
+            if (tabName === 'communes') {
+                displayCommuneCards();
+            }
+        }
+
+        // Create simple charts without external dependencies
+        function createSimpleCharts() {
+            const communeNames = Object.keys(communesData);
+            const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6'];
+
+            // Students pie chart
+            const studentsContainer = document.getElementById('studentsChart');
+            const totalStudents = Object.values(communesData).reduce((sum, data) => sum + data.students, 0);
+            
+            studentsContainer.innerHTML = communeNames.map((commune, index) => {
+                const percentage = ((communesData[commune].students / totalStudents) * 100).toFixed(1);
+                return `
+                    <div class="pie-item" style="border-left-color: ${colors[index]}">
+                        <div class="pie-value">${percentage}%</div>
+                        <div class="pie-label">${commune}<br>${communesData[commune].students.toLocaleString()} students</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Schools bar chart
+            const schoolsContainer = document.getElementById('schoolsChart');
+            const maxSchools = Math.max(...Object.values(communesData).map(data => data.schools));
+            
+            schoolsContainer.innerHTML = communeNames.map((commune, index) => {
+                const height = Math.max((communesData[commune].schools / maxSchools) * 100, 20);
+                return `
+                    <div class="chart-bar">
+                        <div class="bar" style="height: ${height}px; background: ${colors[index]}">
+                            ${communesData[commune].schools}
+                        </div>
+                        <div class="bar-label">${commune.split(' ')[0]}</div>
+                    </div>
+                `;
+            }).join('');
+
+            // Technology chart
+            const technologyContainer = document.getElementById('technologyChart');
+            const maxTech = Math.max(...Object.values(communesData).map(data => data.projectors));
+            
+            technologyContainer.innerHTML = `
+                <div style="width: 100%; margin-bottom: 15px; text-align: center; font-weight: bold;">
+                    Projectors by Commune
+                </div>
+                ${communeNames.map((commune, index) => {
+                    const height = Math.max((communesData[commune].projectors / maxTech) * 80, 20);
+                    return `
+                        <div class="chart-bar">
+                            <div class="bar" style="height: ${height}px; background: ${colors[index]}">
+                                ${communesData[commune].projectors}
+                            </div>
+                            <div class="bar-label">${commune.split(' ')[0]}</div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+
+            // High need items
+            const highNeedContainer = document.getElementById('highNeedChart');
+            const highNeedData = [
+                { name: 'Security Cameras', value: 419, color: '#e74c3c' },
+                { name: 'Projectors', value: 375, color: '#3498db' },
+                { name: 'Windows to Replace', value: 447, color: '#f39c12' },
+                { name: 'Screens 72"', value: 310, color: '#2ecc71' },
+                { name: 'Student Toilets', value: 198, color: '#9b59b6' }
+            ];
+            
+            highNeedContainer.innerHTML = highNeedData.map(item => `
+                <div class="pie-item" style="border-left-color: ${item.color}">
+                    <div class="pie-value">${item.value}</div>
+                    <div class="pie-label">${item.name}</div>
+                </div>
+            `).join('');
+
+            // Low need items
+            const lowNeedContainer = document.getElementById('lowNeedChart');
+            const lowNeedData = [
+                { name: 'Computers', value: 85, color: '#95a5a6' },
+                { name: 'Special Education Rooms', value: 12, color: '#34495e' },
+                { name: 'Admin Buildings', value: 15, color: '#7f8c8d' },
+                { name: 'Handrails', value: 18, color: '#bdc3c7' },
+                { name: 'Door Widening', value: 23, color: '#95a5a6' }
+            ];
+            
+            lowNeedContainer.innerHTML = lowNeedData.map(item => `
+                <div class="pie-item" style="border-left-color: ${item.color}">
+                    <div class="pie-value">${item.value}</div>
+                    <div class="pie-label">${item.name}</div>
+                </div>
+            `).join('');
+        }
+
+        // Display commune cards
+        function displayCommuneCards() {
+            const container = document.getElementById('communeCards');
+            const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6'];
+            
+            container.innerHTML = Object.keys(communesData).map((commune, index) => {
+                const data = communesData[commune];
+                return `
+                    <div class="commune-card" style="background: linear-gradient(135deg, ${colors[index]}aa, ${colors[index]});">
+                        <div class="commune-name">${commune}</div>
+                        <div class="commune-stats">
+                            <div>Schools: ${data.schools}</div>
+                            <div>Students: ${data.students.toLocaleString()}</div>
+                            <div>Classrooms: ${data.classrooms}</div>
+                            <div>Projectors: ${data.projectors}</div>
+                            <div>Computers: ${data.computers}</div>
+                            <div>Avg/School: ${Math.round(data.students / data.schools)}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Tab navigation
+            document.querySelectorAll('.tab-item').forEach(tabItem => {
+                tabItem.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+
+            // Explorer filters
+            const communeSelect = document.getElementById('communeSelect');
+            const schoolSelect = document.getElementById('schoolSelect');
+            const categorySelect = document.getElementById('categorySelect');
+
+            if (communeSelect) {
+                communeSelect.addEventListener('change', updateSchoolsList);
+            }
+            if (schoolSelect) {
+                schoolSelect.addEventListener('change', showSchoolDetails);
+            }
+            if (categorySelect) {
+                categorySelect.addEventListener('change', showSchoolDetails);
+            }
+
+            // PWA install events
+            if (installBtn) {
+                installBtn.addEventListener('click', installApp);
+            }
+            if (closeBanner) {
+                closeBanner.addEventListener('click', hideBanner);
+            }
+        }
+
+        // Update schools list
+        function updateSchoolsList() {
+            const communeSelect = document.getElementById('communeSelect');
+            const schoolSelect = document.getElementById('schoolSelect');
+            const selectedCommune = communeSelect.value;
+            
+            schoolSelect.innerHTML = '<option value="">Choose a school</option>';
+            
+            if (selectedCommune && allSchoolsData[selectedCommune]) {
+                allSchoolsData[selectedCommune].forEach((school, index) => {
+                    const option = document.createElement('option');
+                    option.value = selectedCommune + '-' + index;
+                    option.textContent = school.name + ' (' + school.students + ' students)';
+                    schoolSelect.appendChild(option);
+                });
+            }
+            
+            document.getElementById('schoolDetails').innerHTML = '<p>Select a school to view detailed information</p>';
+        }
+
+        // Show school details
+        function showSchoolDetails() {
+            const schoolSelect = document.getElementById('schoolSelect');
+            const categorySelect = document.getElementById('categorySelect');
+            const schoolValue = schoolSelect.value;
+            const categoryValue = categorySelect.value;
+            
+            if (!schoolValue) {
+                document.getElementById('schoolDetails').innerHTML = '<p>Select a school to view detailed information</p>';
+                return;
+            }
+            
+            const parts = schoolValue.split('-');
+            const commune = parts[0];
+            const index = parseInt(parts[1]);
+            const school = allSchoolsData[commune][index];
+            
+            displaySchoolInfo(school, commune, categoryValue);
+        }
+
+        // Display school info
+        function displaySchoolInfo(school, commune, filterCategory = null) {
+            const detailsContainer = document.getElementById('schoolDetails');
+            
+            const schoolData = {
+                infrastructure: { newClassrooms: 2, multifunction: 1, staffRoom: 1, preschoolRooms: 1 },
+                technology: { projectors: 6, screens: 6, cameras: 8, computers: 1, dvr: 1 },
+                accessibility: { wheelchairRamps: 1, accessibleToilets: 1, waterFountains: 1, specialEd: 0 },
+                maintenance: { studentToilets: 4, teacherToilets: 2, windows: 12, lighting: 6 },
+                equipment: { lockers: 1, shelves: 6, printers: 1, studentDesks: Math.floor(school.students/25) }
+            };
+            
+            const categoryNeeds = {
+                infrastructure: [
+                    `New classrooms: ${schoolData.infrastructure.newClassrooms} needed`,
+                    `Multifunction room: ${schoolData.infrastructure.multifunction} needed`, 
+                    `Staff room: ${schoolData.infrastructure.staffRoom} needed`,
+                    `Preschool rooms: ${schoolData.infrastructure.preschoolRooms} needed`
+                ],
+                technology: [
+                    `Projectors: ${schoolData.technology.projectors} units`,
+                    `Screens 72": ${schoolData.technology.screens} units`, 
+                    `Security cameras: ${schoolData.technology.cameras} units`,
+                    `Computers: ${schoolData.technology.computers} units`,
+                    `DVR systems: ${schoolData.technology.dvr} units`
+                ],
+                accessibility: [
+                    `Wheelchair ramps: ${schoolData.accessibility.wheelchairRamps} units`,
+                    `Accessible toilets: ${schoolData.accessibility.accessibleToilets} units`,
+                    `Water fountains: ${schoolData.accessibility.waterFountains} units`,
+                    `Special ed rooms: ${schoolData.accessibility.specialEd} needed`
+                ],
+                maintenance: [
+                    `Student toilets restore: ${schoolData.maintenance.studentToilets} units`, 
+                    `Teacher toilets restore: ${schoolData.maintenance.teacherToilets} units`,
+                    `Windows replace: ${schoolData.maintenance.windows} units`,
+                    `LED lighting: ${schoolData.maintenance.lighting} classrooms`
+                ],
+                equipment: [
+                    `Admin lockers: ${schoolData.equipment.lockers} sets`,
+                    `Shelves: ${schoolData.equipment.shelves} units`, 
+                    `Printers: ${schoolData.equipment.printers} units`,
+                    `Student desks: ${schoolData.equipment.studentDesks} units`
+                ]
+            };
+            
+            let html = `
+                <div class="school-info">
+                    <div class="school-header">
+                        <div class="school-name">${school.name}</div>
+                        <div class="school-commune">${commune} • ${school.students.toLocaleString()} students • ${school.classrooms || 'N/A'} classrooms</div>
+                        ${school.principal ? '<div class="school-commune">Principal: ' + school.principal + (school.phone ? ' • Phone: ' + school.phone : '') + '</div>' : ''}
+                    </div>
+                    <div class="needs-grid">
+            `;
+            
+            if (filterCategory && categoryNeeds[filterCategory]) {
+                const categoryTitle = filterCategory.charAt(0).toUpperCase() + filterCategory.slice(1);
+                const needs = categoryNeeds[filterCategory];
+                
+                html += `
+                    <div class="need-category">
+                        <h4>${categoryTitle} Needs</h4>
+                        ${needs.map(need => `
+                            <div class="need-item">${need}</div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                Object.entries(categoryNeeds).forEach(([category, needs]) => {
+                    const categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
+                    html += `
+                        <div class="need-category">
+                            <h4>${categoryTitle}</h4>
+                            ${needs.slice(0, 3).map(need => `
+                                <div class="need-item">${need}</div>
+                            `).join('')}
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '</div></div>';
+            detailsContainer.innerHTML = html;
+        }
+
+        // PWA Installation functions
+        function installApp() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        hideBanner();
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        function hideBanner() {
+            if (installBanner) {
+                installBanner.classList.remove('show');
+            }
+        }
+
+        // PWA Events
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            setTimeout(() => {
+                if (installBanner && !window.matchMedia('(display-mode: standalone)').matches) {
+                    installBanner.classList.add('show');
+                }
+            }, 3000);
+        });
+
+        window.addEventListener('appinstalled', () => {
+            hideBanner();
+            deferredPrompt = null;
+        });
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then((registration) => {
+                    console.log('SW registered: ', registration);
+                })
+                .catch((registrationError) => {
+                    console.log('SW registration failed: ', registrationError);
+                });
+            });
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing PWA School Dashboard...');
+            
+            try {
+                createSimpleCharts();
+                displayCommuneCards();
+                setupEventListeners();
+                console.log('Dashboard initialized successfully!');
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+            }
+        });
+
+        console.log('School Dashboard PWA loaded successfully');
+    </script>
+</body>
+</html>
